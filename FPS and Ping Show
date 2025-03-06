@@ -1,0 +1,147 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+if not player then
+    warn("LocalPlayer not found.")
+    return
+end
+
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "PingFPSDisplayGUI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true  -- To avoid Safe Area constraints
+
+-- Create the main GUI frame to display Ping and FPS
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 250, 0, 40)
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.AnchorPoint = Vector2.new(0, 0)  -- Reference from the top-left corner
+mainFrame.BackgroundTransparency = 0.5
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+
+local mainCorner = Instance.new("UICorner", mainFrame)
+mainCorner.CornerRadius = UDim.new(0, 12)
+
+local statsLabel = Instance.new("TextLabel", mainFrame)
+statsLabel.Size = UDim2.new(1, -10, 1, -10)
+statsLabel.Position = UDim2.new(0, 5, 0, 5)
+statsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+statsLabel.TextScaled = true
+statsLabel.Font = Enum.Font.SourceSansBold
+statsLabel.Text = "Ping: 0 ms | FPS: 0"
+statsLabel.BackgroundTransparency = 1
+statsLabel.RichText = true
+
+-- Variables to calculate FPS and Ping
+local lastTime = tick()
+local frameCount = 0
+local lastPingTime = 0
+local ping = 0
+
+local function clampPosition(position)
+    local screenSize = workspace.CurrentCamera.ViewportSize
+    local maxX = screenSize.X - mainFrame.Size.X.Offset
+    local maxY = screenSize.Y - mainFrame.Size.Y.Offset
+    local newX = math.clamp(position.X.Offset, 0, maxX)
+    local newY = math.clamp(position.Y.Offset, 0, maxY)
+    return UDim2.new(0, newX, 0, newY)
+end
+
+local function getFPSColor(fps)
+    if fps > 60 then
+        return Color3.fromRGB(0, 255, 0)
+    elseif fps > 30 then
+        return Color3.fromRGB(255, 255, 0)
+    else
+        return Color3.fromRGB(255, 0, 0)
+    end
+end
+
+local function getPingColor(ping)
+    if ping < 100 then
+        return Color3.fromRGB(0, 255, 0)
+    elseif ping < 200 then
+        return Color3.fromRGB(255, 255, 0)
+    else
+        return Color3.fromRGB(255, 0, 0)
+    end
+end
+
+local function updateStatsDisplay(ping, fps)
+    local fpsColor = getFPSColor(fps)
+    local pingColor = getPingColor(ping)
+
+    statsLabel.Text = string.format(
+        '<font color="rgb(255,255,255)">Ping:</font> <font color="rgb(%d,%d,%d)">%d ms</font> | <font color="rgb(255,255,255)">FPS:</font> <font color="rgb(%d,%d,%d)">%d</font>',
+        pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping,
+        fpsColor.R * 255, fpsColor.G * 255, fpsColor.B * 255, fps
+    )
+end
+
+RunService.RenderStepped:Connect(function()
+    frameCount += 1
+    local currentTime = tick()
+
+    if currentTime - lastTime >= 1 then
+        local fps = frameCount
+        frameCount = 0
+        lastTime = currentTime
+
+        if currentTime - lastPingTime >= 1 then
+            ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) + 1
+            lastPingTime = currentTime
+        end
+
+        updateStatsDisplay(ping, fps)
+    end
+end)
+
+-- Dragging functionality for the GUI
+local dragging, dragStart, startPos, dragInput
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = clampPosition(UDim2.new(0, startPos.X.Offset + delta.X, 0, startPos.Y.Offset + delta.Y))
+    end
+end)
+
+-- Toggle button to show/hide the GUI
+local toggleButton = Instance.new("TextButton", screenGui)
+toggleButton.Text = "Toggle Stats"
+toggleButton.Size = UDim2.new(0, 100, 0, 30)
+toggleButton.Position = UDim2.new(0, 10, 0, 60)  -- Position of the button
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Background color of the button
+toggleButton.BackgroundTransparency = 0.7  -- Make the button more transparent
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)  -- Text color
+toggleButton.TextTransparency = 0.5  -- Make the text more transparent
+toggleButton.TextScaled = true  -- Scale the text to fit the button
+
+toggleButton.MouseButton1Click:Connect(function()
+    -- Toggle the visibility of the mainFrame
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+-- Credits: Script by [Slaphello]
