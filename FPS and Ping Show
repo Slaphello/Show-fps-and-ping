@@ -1,29 +1,31 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-
 local player = Players.LocalPlayer
+
 if not player then
     warn("LocalPlayer not found.")
     return
 end
 
+-- Create ScreenGui
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "PingFPSDisplayGUI"
 screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true  -- To avoid Safe Area constraints
+screenGui.IgnoreGuiInset = true  -- Avoid Safe Area constraints
 
--- Create the main GUI frame to display Ping and FPS
+-- Create main GUI frame
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Size = UDim2.new(0, 250, 0, 40)
 mainFrame.Position = UDim2.new(0, 10, 0, 10)
-mainFrame.AnchorPoint = Vector2.new(0, 0)  -- Reference from the top-left corner
+mainFrame.AnchorPoint = Vector2.new(0, 0)
 mainFrame.BackgroundTransparency = 0.5
 mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 
 local mainCorner = Instance.new("UICorner", mainFrame)
 mainCorner.CornerRadius = UDim.new(0, 12)
 
+-- Stats label
 local statsLabel = Instance.new("TextLabel", mainFrame)
 statsLabel.Size = UDim2.new(1, -10, 1, -10)
 statsLabel.Position = UDim2.new(0, 5, 0, 5)
@@ -34,12 +36,13 @@ statsLabel.Text = "Ping: 0 ms | FPS: 0"
 statsLabel.BackgroundTransparency = 1
 statsLabel.RichText = true
 
--- Variables to calculate FPS and Ping
+-- FPS & Ping calculation variables
 local lastTime = tick()
 local frameCount = 0
 local lastPingTime = 0
 local ping = 0
 
+-- Function to clamp GUI position within screen bounds
 local function clampPosition(position)
     local screenSize = workspace.CurrentCamera.ViewportSize
     local maxX = screenSize.X - mainFrame.Size.X.Offset
@@ -49,6 +52,7 @@ local function clampPosition(position)
     return UDim2.new(0, newX, 0, newY)
 end
 
+-- Function to get FPS color
 local function getFPSColor(fps)
     if fps > 60 then
         return Color3.fromRGB(0, 255, 0)
@@ -59,6 +63,7 @@ local function getFPSColor(fps)
     end
 end
 
+-- Function to get Ping color
 local function getPingColor(ping)
     if ping < 100 then
         return Color3.fromRGB(0, 255, 0)
@@ -69,10 +74,10 @@ local function getPingColor(ping)
     end
 end
 
+-- Update the stats display
 local function updateStatsDisplay(ping, fps)
     local fpsColor = getFPSColor(fps)
     local pingColor = getPingColor(ping)
-
     statsLabel.Text = string.format(
         '<font color="rgb(255,255,255)">Ping:</font> <font color="rgb(%d,%d,%d)">%d ms</font> | <font color="rgb(255,255,255)">FPS:</font> <font color="rgb(%d,%d,%d)">%d</font>',
         pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping,
@@ -84,16 +89,19 @@ RunService.RenderStepped:Connect(function()
     frameCount += 1
     local currentTime = tick()
 
+    -- Calculate FPS every second
     if currentTime - lastTime >= 1 then
         local fps = frameCount
         frameCount = 0
         lastTime = currentTime
 
+        -- Calculate Ping every second
         if currentTime - lastPingTime >= 1 then
             ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) + 1
             lastPingTime = currentTime
         end
 
+        -- Update stats display
         updateStatsDisplay(ping, fps)
     end
 end)
@@ -101,12 +109,14 @@ end)
 -- Dragging functionality for the GUI
 local dragging, dragStart, startPos, dragInput
 
+-- Handle mouse button press to start dragging
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = mainFrame.Position
 
+        -- Reset dragging status when input ends
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -115,12 +125,14 @@ mainFrame.InputBegan:Connect(function(input)
     end
 end)
 
+-- Detect mouse movement to update the position of the GUI
 mainFrame.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
 
+-- Update GUI position as the mouse moves while dragging
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
@@ -132,15 +144,15 @@ end)
 local toggleButton = Instance.new("TextButton", screenGui)
 toggleButton.Text = "Toggle Stats"
 toggleButton.Size = UDim2.new(0, 100, 0, 30)
-toggleButton.Position = UDim2.new(0, 10, 0, 60)  -- Position of the button
-toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Background color of the button
-toggleButton.BackgroundTransparency = 0.7  -- Make the button more transparent
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)  -- Text color
-toggleButton.TextTransparency = 0.5  -- Make the text more transparent
-toggleButton.TextScaled = true  -- Scale the text to fit the button
+toggleButton.Position = UDim2.new(0, 10, 0, 60)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+toggleButton.BackgroundTransparency = 0.7
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextTransparency = 0.5
+toggleButton.TextScaled = true
 
+-- Toggle the visibility of mainFrame when clicked
 toggleButton.MouseButton1Click:Connect(function()
-    -- Toggle the visibility of the mainFrame
     mainFrame.Visible = not mainFrame.Visible
 end)
 
