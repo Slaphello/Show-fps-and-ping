@@ -1,148 +1,221 @@
--- Open source now
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Stats = game:GetService("Stats")
-local TweenService = game:GetService("TweenService")
-
-local localPlayer = Players.LocalPlayer
-if not localPlayer then
-    warn("LocalPlayer not found!")
+local a = game:GetService("Players")
+local b = game:GetService("RunService")
+local c = game:GetService("UserInputService")
+local d = game:GetService("Stats")
+local e = game:GetService("TweenService")
+local f = a.LocalPlayer
+if not f then
+    warn("LocalPlayer not found bruh")
     return
 end
-
-local function getGUIParent()
-    local parent = localPlayer:WaitForChild("PlayerGui")
+local function g()
+    local h = f:WaitForChild("PlayerGui")
     if gethui then
-        parent = gethui()
+        h = gethui()
     elseif get_hidden_gui then
-        parent = get_hidden_gui()
+        h = get_hidden_gui()
     end
-    return parent
+    return h
 end
-
-local parentGui = getGUIParent()
-
-if
-    not Stats or not Stats.Network or not Stats.Network.ServerStatsItem or
-        not Stats.Network.ServerStatsItem:FindFirstChild("Data Ping")
- then
-    warn("Stats service not available!")
+local i = g()
+if not d or not d.Network or not d.Network.ServerStatsItem or not d.Network.ServerStatsItem:FindFirstChild("Data Ping") then
+    warn("Stats service not found bruh")
     return
 end
-
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "PingFPSDisplay"
-screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true
-screenGui.Parent = parentGui
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 160, 0, 32)
-mainFrame.Position = UDim2.new(0, -200, 0, 10)
-mainFrame.BackgroundTransparency = 1
-mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
-mainFrame.Parent = screenGui
-
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 12)
-uiCorner.Parent = mainFrame
-
-local statsLabel = Instance.new("TextLabel")
-statsLabel.Name = "StatsLabel"
-statsLabel.Size = UDim2.new(1, -8, 1, -6)
-statsLabel.Position = UDim2.new(0, 4, 0, 3)
-statsLabel.TextColor3 = Color3.new(1, 1, 1)
-statsLabel.TextScaled = true
-statsLabel.Font = Enum.Font.SourceSansBold
-statsLabel.BackgroundTransparency = 1
-statsLabel.RichText = true
-statsLabel.TextTransparency = 1
-statsLabel.Text = "Ping: -- ms | FPS: --"
-statsLabel.Parent = mainFrame
-
-local function saveUIPosition()
-    parentGui:SetAttribute("LastUIPosX", mainFrame.Position.X.Offset)
-    parentGui:SetAttribute("LastUIPosY", mainFrame.Position.Y.Offset)
+local j = Instance.new("ScreenGui")
+j.Name = "PingAndFPS_Display"
+j.ResetOnSpawn = false
+j.IgnoreGuiInset = true
+j.Parent = i
+local k = Instance.new("Frame")
+k.Name = "MainFrame"
+k.Size = UDim2.new(0, 160, 0, 32)
+k.Position = UDim2.new(0, -200, 0, 10)
+k.BackgroundTransparency = 1
+k.BackgroundColor3 = Color3.new(0, 0, 0)
+k.Parent = j
+local l = Instance.new("UICorner")
+l.CornerRadius = UDim.new(0, 12)
+l.Parent = k
+local m = Instance.new("TextLabel")
+m.Name = "StatsLabel"
+m.Size = UDim2.new(1, -8, 1, -6)
+m.Position = UDim2.new(0, 4, 0, 3)
+m.TextColor3 = Color3.new(1, 1, 1)
+m.TextScaled = true
+m.Font = Enum.Font.SourceSansBold
+m.BackgroundTransparency = 1
+m.RichText = true
+m.TextTransparency = 1
+m.Text = "Ping: -- ms | FPS: --"
+m.Parent = k
+local function n()
+    i:SetAttribute("LastUIPosX", k.Position.X.Offset)
+    i:SetAttribute("LastUIPosY", k.Position.Y.Offset)
 end
-
-local function loadUIPosition()
-    local x = parentGui:GetAttribute("LastUIPosX") or 10
-    local y = parentGui:GetAttribute("LastUIPosY") or 10
-    local size = workspace.CurrentCamera.ViewportSize
-    x = math.clamp(x, 0, size.X - mainFrame.Size.X.Offset)
-    y = math.clamp(y, 0, size.Y - mainFrame.Size.Y.Offset)
-    return UDim2.new(0, x, 0, y)
+local function o()
+    local p = i:GetAttribute("LastUIPosX") or 10
+    local q = i:GetAttribute("LastUIPosY") or 10
+    local r = workspace.CurrentCamera.ViewportSize
+    p = math.clamp(p, 0, r.X - k.Size.X.Offset)
+    q = math.clamp(q, 0, r.Y - k.Size.Y.Offset)
+    return UDim2.new(0, p, 0, q)
 end
-
-mainFrame.Position = loadUIPosition()
-
-local function median(t)
-    local sorted = table.clone(t)
-    table.sort(sorted)
-    local n = #sorted
-    if n % 2 == 0 then
-        return (sorted[n / 2] + sorted[n / 2 + 1]) / 2
+k.Position = o()
+local function s(t)
+    local u = table.clone(t)
+    table.sort(u)
+    local v = #u
+    if v % 2 == 0 then
+        return (u[v / 2] + u[v / 2 + 1]) / 2
     else
-        return sorted[math.ceil(n / 2)]
+        return u[math.ceil(v / 2)]
     end
 end
-
-local updateInterval = 1
-local lastUpdate = tick()
-local frameCount = 0
-
-local fpsEstimate = 60
-local fpsTrend = 0
-local alpha = 0.2
-local beta = 0.05
-
-local pingBuffer = {}
-local pingLimit = 10
-local pingEstimate = 50
-
-local function colorizeFPS(value)
-    if value >= 60 then
+local w = 1
+local x = tick()
+local y = 0
+local z = 60
+local A = 0
+local B = 0.2
+local C = 0.05
+local D = {}
+local E = 10
+local F = 50
+local function G(H)
+    if H >= 60 then
         return Color3.fromRGB(0, 255, 0)
-    elseif value >= 30 then
+    elseif H >= 30 then
         return Color3.fromRGB(255, 255, 0)
     else
         return Color3.fromRGB(255, 0, 0)
     end
 end
-
-local function colorizePing(value)
-    if value < 80 then
+local function I(H)
+    if H < 80 then
         return Color3.fromRGB(0, 255, 0)
-    elseif value < 150 then
+    elseif H < 150 then
         return Color3.fromRGB(255, 255, 0)
     else
         return Color3.fromRGB(255, 0, 0)
     end
 end
-
-local function updateUI()
-    local pingColor = colorizePing(pingEstimate)
-    local fpsColor = colorizeFPS(fpsEstimate)
-
-    statsLabel.Text =
+local function J()
+    local K = I(F)
+    local L = G(z)
+    m.Text =
         string.format(
         '<font color="rgb(255,255,255)">Ping:</font> <font color="rgb(%d,%d,%d)">%d ms</font> | <font color="rgb(255,255,255)">FPS:</font> <font color="rgb(%d,%d,%d)">%d</font>',
-        pingColor.R * 255,
-        pingColor.G * 255,
-        pingColor.B * 255,
-        pingEstimate,
-        fpsColor.R * 255,
-        fpsColor.G * 255,
-        fpsColor.B * 255,
-        fpsEstimate
+        K.R * 255,
+        K.G * 255,
+        K.B * 255,
+        F,
+        L.R * 255,
+        L.G * 255,
+        L.B * 255,
+        z
     )
 end
-
-RunService.Heartbeat:Connect(
-    function(dt)
-        frameCount += 1
+b.Heartbeat:Connect(
+    function(M)
+        y = y + 1
+        local N = math.clamp(d.Network.ServerStatsItem["Data Ping"]:GetValue(), 0, 999)
+        table.insert(D, N)
+        if #D > E then
+            table.remove(D, 1)
+        end
+        local O = tick()
+        if O - x >= w then
+            local P = y / (O - x)
+            local Q = z
+            z = B * P + (1 - B) * (z + A)
+            A = C * (z - Q)
+            if #D > 0 then
+                F = s(D)
+            end
+            J()
+            y = 0
+            x = O
+        end
+    end
+)
+local R = false
+local S, T
+k.InputBegan:Connect(
+    function(U)
+        if U.UserInputType == Enum.UserInputType.MouseButton1 or U.UserInputType == Enum.UserInputType.Touch then
+            R = true
+            S = U.Position
+            T = k.Position
+            U.Changed:Connect(
+                function()
+                    if U.UserInputState == Enum.UserInputState.End then
+                        R = false
+                        n()
+                    end
+                end
+            )
+        end
+    end
+)
+c.InputChanged:Connect(
+    function(U)
+        if R and (U.UserInputType == Enum.UserInputType.MouseMovement or U.UserInputType == Enum.UserInputType.Touch) then
+            local V = U.Position - S
+            local W = math.clamp(T.X.Offset + V.X, 0, workspace.CurrentCamera.ViewportSize.X - k.Size.X.Offset)
+            local X = math.clamp(T.Y.Offset + V.Y, 0, workspace.CurrentCamera.ViewportSize.Y - k.Size.Y.Offset)
+            k.Position = UDim2.new(0, W, 0, X)
+        end
+    end
+)
+local Y = 0
+local Z = 0.5
+local _ = Instance.new("TextButton")
+_.Name = "ToggleStatsButtLOL"
+_.Text = "Toggle Stats"
+_.Size = UDim2.new(0, 100, 0, 25)
+_.Position = UDim2.new(0, 10, 0, 70)
+_.BackgroundColor3 = Color3.new(0, 0, 0)
+_.BackgroundTransparency = 0.7
+_.TextColor3 = Color3.new(1, 1, 1)
+_.TextScaled = true
+_.Parent = j
+_.MouseButton1Click:Connect(
+    function()
+        local O = tick()
+        if O - Y < Z then
+            return
+        end
+        Y = O
+        local a0 = workspace.CurrentCamera.ViewportSize
+        if k.Visible then
+            local a1 = k.Position.X.Offset < a0.X / 2 and -k.Size.X.Offset or a0.X
+            local a2 = UDim2.new(0, a1, 0, k.Position.Y.Offset)
+            local a3 =
+                e:Create(k, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = a2})
+            a3:Play()
+            a3.Completed:Connect(
+                function()
+                    k.Visible = false
+                end
+            )
+        else
+            local a4 = o()
+            local a1 = a4.X.Offset < a0.X / 2 and -k.Size.X.Offset or a0.X
+            k.Position = UDim2.new(0, a1, 0, a4.Y.Offset)
+            k.Visible = true
+            local a5 =
+                e:Create(k, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = a4})
+            a5:Play()
+        end
+    end
+)
+local a6 =
+    e:Create(k, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.5})
+local a7 = e:Create(m, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
+task.wait(0.5)
+a6:Play()
+a7:Play()
         local rawPing = math.clamp(Stats.Network.ServerStatsItem["Data Ping"]:GetValue(), 0, 999)
         table.insert(pingBuffer, rawPing)
         if #pingBuffer > pingLimit then
